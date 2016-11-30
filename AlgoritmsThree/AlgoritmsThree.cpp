@@ -20,6 +20,7 @@ int main()
 	int width = 1;
 	Tree<int>::SetWidh(width, *root);
 	Tree<int>::Print(*root);
+	Tree<int>* path = root->GetMaxPathRoot();
 	int search;
 	cin >> search;
     return 0;

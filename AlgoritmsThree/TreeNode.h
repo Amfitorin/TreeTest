@@ -4,7 +4,14 @@
 #include <queue>;
 template<class T> class Tree
 {
+
 public:
+	struct TreePath
+	{
+		Tree* root;
+		int height;
+	} path;
+
 	Tree(Tree& parent);
 	Tree(T& value);
 	Tree(T& value, int& height);
@@ -20,7 +27,9 @@ public:
 	static void SetWidh(int& space, Tree& root);
 	static int GetWidth(int& width, Tree& root);
 	static int Height(Tree* root);
-	static Tree<T>* MaxPath(Tree& root);
+	void MaxPath( Tree* root, TreePath& maxPath );
+	Tree<T>* GetMaxPathRoot();
+
 private:
 	Tree* left;
 	Tree* right;
@@ -213,25 +222,28 @@ inline int Tree<T>::Height(Tree * root)
 }
 
 template<class T>
-inline Tree<T> * Tree<T>::MaxPath(Tree & root)
+inline void Tree<T>::MaxPath(Tree* root, TreePath& maxPath)
 {
-	Tree<T>* result;
-	Tree* temp = root;
-	int path = 0;
-	while (temp.left != NULL and temp.right != NULL)
+	if (root)
 	{
-		int lh = Height(root.left);
-		int rh = Height(root.right);
-		if (lh + rh > path)
+		int rootHight = Height(root->left) + Height(root->right);
+		if (!maxPath.root || maxPath.height < rootHight)
 		{
-			path = lh + rh;
-			result = temp;
+			maxPath.root = root;
+			maxPath.height = rootHight;
 		}
+		MaxPath(root->left, maxPath);
+		MaxPath(root -> right, maxPath);
 	}
-	return NULL;
 }
-
-
-#endif // !TREE_NODE_H
-
+template<class T>
+inline Tree<T>* Tree<T>::GetMaxPathRoot()
+{
+	path.root = this;
+	path.height = Height(this->left) + Height(this->right);
+	MaxPath(this, path);
+	int s = 5;
+	return path.root;
+}
+#endif 
 
