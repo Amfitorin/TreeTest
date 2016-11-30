@@ -10,6 +10,8 @@ public:
 	{
 		Tree* root;
 		int height;
+		int left;
+		int right;
 	} path;
 
 	Tree(Tree& parent);
@@ -24,16 +26,19 @@ public:
 	void Insert(T& element);
 	static void PrintNode(int& space, Tree& root);
 	static void Print(Tree& root);
+	static void PrintLeft( Tree* root, int& h );
 	static void SetWidh(int& space, Tree& root);
 	static int GetWidth(int& width, Tree& root);
 	static int Height(Tree* root);
 	void MaxPath( Tree* root, TreePath& maxPath );
 	Tree<T>* GetMaxPathRoot();
-
-private:
+	static int CheckPath( Tree& root, int& left, int& right );
+	static T* StorePath(Tree& root, int& left, int& right);
 	Tree* left;
 	Tree* right;
 	T value;
+
+private:
 	int width;
 	int height;
 	Tree* prev;
@@ -174,6 +179,18 @@ inline void Tree<T>::Print( Tree& root)
 }
 
 template<class T>
+inline void Tree<T>::PrintLeft(Tree* root, int & h)
+{
+	if (root != 0)
+	{
+		int i = h + 3;
+		PrintLeft(root->left, i);
+		cout << cout.width(h) << root->value<<endl;
+		PrintLeft(root->right, i );
+	}
+}
+
+template<class T>
 inline void Tree<T>::SetWidh(int & space, Tree & root)
 {
 	int width = 0;
@@ -226,11 +243,31 @@ inline void Tree<T>::MaxPath(Tree* root, TreePath& maxPath)
 {
 	if (root)
 	{
-		int rootHight = Height(root->left) + Height(root->right);
-		if (!maxPath.root || maxPath.height < rootHight)
+		int leftHeight = Height(root->left);
+		int rightHeight = Height(root->right);
+		int height;
+		if ( leftHeight == rightHeight)
+			height = leftHeight + rightHeight;
+		else
+			height = leftHeight + rightHeight + 1;
+		if (!maxPath.root || maxPath.height < leftHeight + rightHeight + 1)
 		{
 			maxPath.root = root;
-			maxPath.height = rootHight;
+			maxPath.height = height;
+			maxPath.left = leftHeight;
+			maxPath.right = rightHeight;
+		}
+		else if ( maxPath.height == height )
+		{
+			int firstPath = CheckPath( *maxPath.root, maxPath.left, maxPath.right);
+			int secondPath = CheckPath( *root, leftHeight, rightHeight);
+			if ( secondPath < firstPath)
+			{
+				maxPath.root = root;
+				maxPath.height = height;
+				maxPath.left = leftHeight;
+				maxPath.right = rightHeight;	
+			}
 		}
 		MaxPath(root->left, maxPath);
 		MaxPath(root -> right, maxPath);
@@ -240,10 +277,138 @@ template<class T>
 inline Tree<T>* Tree<T>::GetMaxPathRoot()
 {
 	path.root = this;
-	path.height = Height(this->left) + Height(this->right);
+	path.left = Height(this->left);
+	path.right = Height( this -> right );
+	path.height =  path.left + path.right + 1;
 	MaxPath(this, path);
-	int s = 5;
 	return path.root;
+}
+template<class T>
+inline int Tree<T>::CheckPath( Tree& root, int& left, int& right )
+{
+	int rightParent = 0;
+	int leftParent = 0;
+	int rightChild = 0;
+	int leftChild = 0;
+	if (left == right)
+	{
+		Tree<T>* tempRoot;
+		int temp = left-1;
+		if (temp >= 0)
+		{
+			tempRoot = root.left;
+			if (temp == 1)
+				leftParent = tempRoot->value;
+			while (temp > 0)
+			{
+				if (Height(tempRoot->left) >= Height(tempRoot->right))
+					tempRoot = tempRoot->left;
+				else
+					tempRoot = tempRoot->right;
+				temp--;
+				if (temp == 1)
+					leftParent = tempRoot->value;
+			}
+			leftChild = tempRoot->value;
+		}
+		temp = right -1 ;
+		if (temp >= 0)
+		{
+			tempRoot = root.right;
+			if (temp == 1)
+				rightParent = tempRoot->value;
+			while (temp > 0)
+			{
+				if (Height(tempRoot->left) >= Height(tempRoot->right))
+					tempRoot = tempRoot->left;
+				else
+					tempRoot = tempRoot->right;
+				temp--;
+				if (temp == 1)
+					rightParent = tempRoot->value;
+			}
+			rightChild = tempRoot->value;
+		}
+		return min( leftParent + rightChild, rightParent+leftChild);
+	}
+	else
+	{
+		Tree<T>* tempRoot;
+		int temp = left-1;
+		if (temp >= 0)
+		{
+			tempRoot = root.left;
+			while (temp > 0)
+			{
+				if (Height(tempRoot->left) >= Height(tempRoot->right))
+					tempRoot = tempRoot->left;
+				else
+					tempRoot = tempRoot->right;
+				temp--;
+			}
+			leftChild = tempRoot->value;
+		}
+		temp = right-1;
+		if (temp >= 0)
+		{
+			tempRoot = root.right;
+			while (temp > 0)
+			{
+				if (Height(tempRoot->left) >= Height(tempRoot->right))
+					tempRoot = tempRoot->left;
+				else
+					tempRoot = tempRoot->right;
+				temp--;
+			}
+			rightChild = tempRoot->value;
+		}
+		return rightChild + leftChild;
+	}	
+}
+template<class T>
+inline T* Tree<T>::StorePath(Tree & root, int & left, int & right)
+{
+	int height = left == right ? left + right : left + right + 1;
+	if (height % 2 == 0)
+	{
+		cout << endl << "К сожалению медиану вычмслить невозможно, количество вершин четное" << endl;
+		return NULL;
+	}
+	T* result = new T[height];
+	int index = 1;
+	result[0] = root.value;
+	Tree<T>* tempRoot;
+	int temp = left-1;
+	if (temp >= 0)
+	{
+		tempRoot = root.left;
+		while (temp >= 0)
+		{
+			result[index] = tempRoot->value;
+			index++;
+			if (Height(tempRoot->left) >= Height(tempRoot->right))
+				tempRoot = tempRoot->left;
+			else
+				tempRoot = tempRoot->right;
+			temp--;
+		}
+	}
+	temp = right-1;
+	if (temp >= 0)
+	{
+		tempRoot = root.right;
+		while (temp >= 0)
+		{
+			result[index] = tempRoot->value;
+			index++;
+			if (Height(tempRoot->left) >= Height(tempRoot->right))
+				tempRoot = tempRoot->left;
+			else
+				tempRoot = tempRoot->right;
+			temp--;
+		}
+	}
+	return result;
 }
 #endif 
 
