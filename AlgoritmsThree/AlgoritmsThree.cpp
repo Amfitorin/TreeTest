@@ -74,6 +74,7 @@ int main()
 		int height = left + right + 1;
 		NonRecursiveQuickSort(s, height);
 		int median = s[height % 2 + 1];
+
 	}
 	int search;
 	cin>>search;
